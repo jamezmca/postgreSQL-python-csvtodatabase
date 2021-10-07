@@ -66,3 +66,5 @@ import sys
 sys.version
 sys.path
 # %%
+3*5
+# %%
