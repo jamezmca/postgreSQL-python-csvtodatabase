@@ -57,8 +57,9 @@ replacements = {
 col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(df.columns, df.dtypes.replace(replacements)))
 col_str
 
+
 # %%
-# cloud sql connection - DROP TABLES WITH SAME NAME
+# cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
 import asyncio
 import asyncpg
 import nest_asyncio
@@ -67,26 +68,7 @@ nest_asyncio.apply()
 async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
     print('connected')
-    await conn.execute('''
-        DROP TABLE IF EXISTS customer_contacts;
-    ''')
-
-    await conn.close() #close the connection
-
-loop = asyncio.get_event_loop() #can also make single line
-loop.run_until_complete(run())
-
-
-# %%
-# cloud sql connection - CREATE TABLE
-import asyncio
-import asyncpg
-import nest_asyncio
-nest_asyncio.apply()
-
-async def run():
-    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
-    print('connected')
+    await conn.execute('DROP TABLE IF EXISTS customer_contracts')
     await conn.execute('''
         CREATE TABLE customer_contracts (
             customer_name varchar, 
@@ -104,7 +86,13 @@ loop = asyncio.get_event_loop() #can also make single line
 loop.run_until_complete(run())
 
 # %%
-# cloud sql connection - INSERT VALUE INTO TABLE
+# save data to CSV in memory
+df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
+my_file = open('customer_contracts.csv')
+print('file opened in memory')
+
+# %%
+# cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
 import asyncio
 import asyncpg
 import nest_asyncio
@@ -113,11 +101,15 @@ nest_asyncio.apply()
 async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
     print('connected')
-    await conn.execute('''
-        DROP TABLE if exists customer_contacts;
-    ''')
-
+    df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
+    my_file = open('customer_contracts.csv')
+    print(my_file)
+    # result = conn.copy_records_to_table(
+    #     'customer_contracts', my_file
+    # )
     await conn.close() #close the connection
 
 loop = asyncio.get_event_loop() #can also make single line
 loop.run_until_complete(run())
+
+# %%
