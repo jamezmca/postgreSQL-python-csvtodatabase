@@ -16,9 +16,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import pyscopg2  # wrapper to make connection to postgreSQL database
-
-# %%
 !ls #lists all files
 
 # %%
@@ -37,6 +34,7 @@ clean_tbl_name = file.lower().replace(" ", "_")\
     .replace(")", "").replace(r"(", "").replace("%", "")\
     .replace("?", "").replace("\\", "_").replace("$","")
 clean_tbl_name
+
 # %%
 #clean header names with same rules
 df.columns = [x.lower().replace(" ", "_")\
@@ -58,13 +56,67 @@ replacements = {
 # %%
 col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(df.columns, df.dtypes.replace(replacements)))
 col_str
+
 # %%
-#open a database connection
-conn_str = 
+# cloud sql connection - DROP TABLES WITH SAME NAME
+import asyncio
+import asyncpg
+import nest_asyncio
+nest_asyncio.apply()
+
+async def run():
+    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
+    print('connected')
+    await conn.execute('''
+        DROP TABLE if exists customer_contacts;
+    ''')
+
+    await conn.close() #close the connection
+
+loop = asyncio.get_event_loop() #can also make single line
+loop.run_until_complete(run())
+
 # %%
-import sys
-sys.version
-sys.path
+# cloud sql connection - CREATE TABLE
+import asyncio
+import asyncpg
+import nest_asyncio
+nest_asyncio.apply()
+
+async def run():
+    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
+    print('connected')
+    await conn.execute('''
+        CREATE TABLE customer_contracts (
+            customer_name varchar, 
+            start_date varchar, 
+            end_date varchar, 
+            contract_amount_m float, 
+            invoice_sent varchar, 
+            paid varchar
+        );
+    ''')
+
+    await conn.close() #close the connection
+
+loop = asyncio.get_event_loop() #can also make single line
+loop.run_until_complete(run())
+
 # %%
-3*5
-# %%
+# cloud sql connection - INSERT VALUE INTO TABLE
+import asyncio
+import asyncpg
+import nest_asyncio
+nest_asyncio.apply()
+
+async def run():
+    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
+    print('connected')
+    await conn.execute('''
+        DROP TABLE if exists customer_contacts;
+    ''')
+
+    await conn.close() #close the connection
+
+loop = asyncio.get_event_loop() #can also make single line
+loop.run_until_complete(run())
