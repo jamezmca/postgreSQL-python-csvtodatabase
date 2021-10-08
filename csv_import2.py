@@ -68,13 +68,14 @@ async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
     print('connected')
     await conn.execute('''
-        DROP TABLE if exists customer_contacts;
+        DROP TABLE IF EXISTS customer_contacts;
     ''')
 
     await conn.close() #close the connection
 
 loop = asyncio.get_event_loop() #can also make single line
 loop.run_until_complete(run())
+
 
 # %%
 # cloud sql connection - CREATE TABLE
