@@ -86,12 +86,6 @@ loop = asyncio.get_event_loop() #can also make single line
 loop.run_until_complete(run())
 
 # %%
-# save data to CSV in memory
-df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
-my_file = open('customer_contracts.csv')
-print('file opened in memory')
-
-# %%
 # cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
 import asyncio
 import asyncpg
@@ -102,11 +96,19 @@ async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
     print('connected')
     df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
-    my_file = open('customer_contracts.csv')
-    print(my_file)
-    # result = conn.copy_records_to_table(
-    #     'customer_contracts', my_file
-    # )
+    values = []
+    with open('customer_contracts.csv', 'r') as f:
+        next(f)
+        for row in f:
+            splitRow = row.strip().split(',')
+            splitRow[3] = float(splitRow[3])
+            values.append(splitRow)
+            
+            # await conn.execute('INSERT INTO customer_contracts VALUES ($1, $2, $3, $4, $5, $6)', values)
+    result = await conn.copy_records_to_table(
+        'customer_contracts', records=values
+    )
+    print(result)
     await conn.close() #close the connection
 
 loop = asyncio.get_event_loop() #can also make single line
