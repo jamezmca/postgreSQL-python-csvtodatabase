@@ -16,6 +16,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from dotenv import load_dotenv
+
 import asyncio
 import asyncpg
 import nest_asyncio
@@ -104,6 +106,12 @@ for k in csv_files:
                 str_arr[i] = float(str_arr[i])
         return str_arr
 
+    #USER AUTH FOR GOOGLE CLOUD DATABASE FROM ENVIRONMENT VARIABLES
+    user = os.getenv("USERNAME")
+    password = os.getenv("PASSWORD")
+    database = os.getenv("DATABASE")
+    ip = os.getenv("PUBLICIP")
+
     #cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
     async def run():
         conn = await asyncpg.connect(user=user, password=password, database=database, host=ip)
@@ -137,12 +145,6 @@ for k in csv_files:
 #print loop end msg
 print('all tables successfully imported')
 ## could also delete recently created csv files
-
-# %% USER AUTH FOR GOOGLE CLOUD DATABASE
-user = "postgres"
-password = "jamesiscool"
-database = "postgres"
-ip = "35.203.71.161"
 
 
 # %%
