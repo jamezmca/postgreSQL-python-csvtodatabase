@@ -136,6 +136,7 @@ for k in csv_files:
 
 #print loop end msg
 print('all tables successfully imported')
+## could also delete recently created csv files
 
 # %% USER AUTH FOR GOOGLE CLOUD DATABASE
 user = "postgres"
