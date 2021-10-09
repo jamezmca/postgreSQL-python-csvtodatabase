@@ -90,32 +90,32 @@ for k in csv_files:
     #table schema
     col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(dataframe.columns, dataframe.dtypes.replace(replacements)))
 
-# %% cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
+    #cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
+    async def run():
+        conn = await asyncpg.connect(user=user, password=password, database=database, host=ip)
+        print('connected')
+        await conn.execute(f'DROP TABLE IF EXISTS {tbl_name}')
+        await conn.execute(f'''
+            CREATE TABLE {tbl_name} (
+                {col_str}
+            );
+        ''')
 
-async def run():
-    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
-    print('connected')
-    await conn.execute('DROP TABLE IF EXISTS customer_contracts')
-    await conn.execute('''
-        CREATE TABLE customer_contracts (
-            customer_name varchar, 
-            start_date varchar, 
-            end_date varchar, 
-            contract_amount_m float, 
-            invoice_sent varchar, 
-            paid varchar
-        );
-    ''')
+        await conn.close() #close the connection
+    loop = asyncio.get_event_loop() #can also make single line
+    loop.run_until_complete(run())
 
-    await conn.close() #close the connection
+# %% USER AUTH FOR GOOGLE CLOUD DATABASE
+user = "postgres"
+password = "jamesiscool"
+database = "postgres"
+ip = "35.203.71.161"
 
-loop = asyncio.get_event_loop() #can also make single line
-loop.run_until_complete(run())
 
 # %% cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
 
 async def run():
-    conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
+    conn = await asyncpg.connect(user=user, password=password, database=database, host=ip)
     print('connected')
     df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
     values = []
