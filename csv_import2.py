@@ -90,6 +90,20 @@ for k in csv_files:
     #table schema
     col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(dataframe.columns, dataframe.dtypes.replace(replacements)))
 
+    def typeClean(str, type_str):
+        #takes in the str of values from a row in the csv
+        #checks converts all integers or floats into the appropriate datatype
+        #and returns an array of each value as the appropriate dtype
+        col_vars = type_str.split(', ')
+        str_arr = str.strip().split(',')
+        for i in range(len(str_arr)):
+            col_type = col_vars[i].split(' ')[1]
+            if col_type == 'int':
+                str_arr[i] = int(str_arr[i])
+            elif col_type == 'float':
+                str_arr[i] = float(str_arr[i])
+        return str_arr
+
     #cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
     async def run():
         conn = await asyncpg.connect(user=user, password=password, database=database, host=ip)
@@ -100,7 +114,22 @@ for k in csv_files:
                 {col_str}
             );
         ''')
+        print(f'{tbl_name} was created successfully')
 
+        #upload info into associates table 
+        dataframe.to_csv(k, header=dataframe.columns, index= False, encoding='utf-8')
+        values = []
+        with open(k, 'r') as f:
+            next(f)
+            for row in f:
+                values.append(tuple(typeClean(row, col_str)))
+            
+            # await conn.execute('INSERT INTO customer_contracts VALUES ($1, $2, $3, $4, $5, $6)', values)
+        
+        result = await conn.copy_records_to_table(
+            tbl_name, records=values
+        )
+        print(result)
         await conn.close() #close the connection
     loop = asyncio.get_event_loop() #can also make single line
     loop.run_until_complete(run())
@@ -111,29 +140,5 @@ password = "jamesiscool"
 database = "postgres"
 ip = "35.203.71.161"
 
-
-# %% cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
-
-async def run():
-    conn = await asyncpg.connect(user=user, password=password, database=database, host=ip)
-    print('connected')
-    df.to_csv('customer_contracts.csv', header=df.columns, index= False, encoding='utf-8')
-    values = []
-    with open('customer_contracts.csv', 'r') as f:
-        next(f)
-        for row in f:
-            splitRow = row.strip().split(',')
-            splitRow[3] = float(splitRow[3])
-            values.append(splitRow)
-            
-            # await conn.execute('INSERT INTO customer_contracts VALUES ($1, $2, $3, $4, $5, $6)', values)
-    result = await conn.copy_records_to_table(
-        'customer_contracts', records=values
-    )
-    print(result)
-    await conn.close() #close the connection
-
-loop = asyncio.get_event_loop() #can also make single line
-loop.run_until_complete(run())
 
 # %%
