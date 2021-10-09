@@ -129,10 +129,13 @@ for k in csv_files:
         result = await conn.copy_records_to_table(
             tbl_name, records=values
         )
-        print(result)
+        print(result, f'import to {tbl_name} complete')
         await conn.close() #close the connection
     loop = asyncio.get_event_loop() #can also make single line
     loop.run_until_complete(run())
+
+#print loop end msg
+print('all tables successfully imported')
 
 # %% USER AUTH FOR GOOGLE CLOUD DATABASE
 user = "postgres"
