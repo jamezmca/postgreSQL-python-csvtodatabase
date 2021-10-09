@@ -10,42 +10,76 @@
 # pass to database to create a table
 # import data into the db
 
-# %%
-#import libraries 
+# %% import libraries 
 import os
 
 import numpy as np
 import pandas as pd
-!ls #lists all files
+
+import asyncio
+import asyncpg
+import nest_asyncio
+nest_asyncio.apply()
 
 # %%
-df = pd.read_csv("Customer Contracts$.csv")
-df.head()
+#find csv files in current working directory
+#isolate only the csv files
+#make a new directory
+#move the csv files in the new directory to process in isolation
+# !ls #lists all files
+csv_files = []
+for file in os.listdir(os.getcwd()):
+    if file.endswith('.csv') and '_' not in file:
+        csv_files.append(file)
+print(csv_files)
 
-# %%
-#clean table names 
-#   lower case letters
-#   remove all $
-#   replace , , -, /, \, ? with _
-file = "Customer Contracts$"
+# %% create a new directory
+dataset_dir = 'datasets'
 
-clean_tbl_name = file.lower().replace(" ", "_")\
-    .replace("-","_").replace("?","_").replace(r"/", "_")\
-    .replace(")", "").replace(r"(", "").replace("%", "")\
-    .replace("?", "").replace("\\", "_").replace("$","")
-clean_tbl_name
+#create bash command to make a new directory
+#   mkdir dataset_dir
+# mkdir = 'mkdir {0}'.format(dataset_dir)
+try:
+    mkdir = f'mkdir {dataset_dir}'
+    os.system(mkdir)
+except: 
+    pass
 
-# %%
-#clean header names with same rules
-df.columns = [x.lower().replace(" ", "_")\
-    .replace("-","_").replace("?","_").replace(r"/", "_")\
-    .replace(")", "").replace(r"(", "").replace("%", "")\
-    .replace("?", "").replace("\\", "_").replace("$","") for x in df.columns]
-df.columns
+#%% move the csv files in the new directory
+#mv filename directory
+for csv in csv_files:
+    mv_file = f"mv '{csv}' {dataset_dir}"
+    os.system(mv_file)
 
-# %%
-#create a dictionary 
-replacements = {
+# %% create the pandas df from the csv file
+data_path = os.getcwd()+'/'+dataset_dir+'/'
+
+df = {}
+for file in csv_files:
+    try:
+        df[file] = pd.read_csv(data_path+file)
+    except UnicodeDecodeError:
+        df[file] = pd.read_csv(data_path+file, encoding="ISO-8859-1")
+    print(file)
+
+# %% clean table names 
+for k in csv_files:
+    dataframe = df[k]
+    clean_tbl_name = k.lower().replace(" ", "_")\
+        .replace("-","_").replace("?","_").replace(r"/", "_")\
+        .replace(")", "").replace(r"(", "").replace("%", "")\
+        .replace("?", "").replace("\\", "_").replace("$","")
+
+    #remove .csv extension from clean_tbl_name
+    tbl_name = f'{clean_tbl_name}'.split('.')[0]
+
+    dataframe.columns = [x.lower().replace(" ", "_")\
+        .replace("-","_").replace("?","_").replace(r"/", "_")\
+        .replace(")", "").replace(r"(", "").replace("%", "")\
+        .replace("?", "").replace("\\", "_").replace("$","") for x in dataframe.columns]
+
+    #replacement dictionary that maps pandas dtypes to SQL dtypes
+    replacements = {
     'object': 'varchar',
     'float64': 'float',
     'int64' : 'int',
@@ -53,17 +87,10 @@ replacements = {
     'timedelta64[ns]': 'varchar'
     }
 
-# %%
-col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(df.columns, df.dtypes.replace(replacements)))
-col_str
+    #table schema
+    col_str = ", ".join("{} {}".format(n, d) for (n, d) in zip(dataframe.columns, dataframe.dtypes.replace(replacements)))
 
-
-# %%
-# cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
-import asyncio
-import asyncpg
-import nest_asyncio
-nest_asyncio.apply()
+# %% cloud sql connection - CREATE TABLE AFTER DROPPING TABLES WITH SAME NAME
 
 async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
@@ -85,12 +112,7 @@ async def run():
 loop = asyncio.get_event_loop() #can also make single line
 loop.run_until_complete(run())
 
-# %%
-# cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
-import asyncio
-import asyncpg
-import nest_asyncio
-nest_asyncio.apply()
+# %% cloud sql connection - INSERT VALUES FROM CSV INTO TABLE
 
 async def run():
     conn = await asyncpg.connect(user="postgres", password="jamesiscool", database="postgres", host="35.203.71.161")
